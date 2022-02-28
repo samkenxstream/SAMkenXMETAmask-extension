@@ -568,6 +568,7 @@ export default class TransactionController extends EventEmitter {
     if (!this._checkIfTxStatusIsUnapproved(txId)) {
       return;
     }
+    
     let swapTransaction = {
       sourceTokenSymbol,
       destinationTokenSymbol,
