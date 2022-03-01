@@ -684,15 +684,11 @@ export function updateTransactionGasFees(txId, txGasFees) {
       throw error;
     }
 
-    try {
-      dispatch(updateTransactionParams(txGasFees.id, txGasFees.txParams));
-      const newState = await updateMetamaskStateFromBackground();
-      dispatch(updateMetamaskState(newState));
-      dispatch(showConfTxPage({ id: txGasFees.id }));
-      return txGasFees;
-    } finally {
-      dispatch(hideLoadingIndication());
-    }
+    dispatch(updateTransactionParams(txGasFees.id, txGasFees.txParams));
+    const newState = await updateMetamaskStateFromBackground();
+    dispatch(updateMetamaskState(newState));
+    dispatch(showConfTxPage({ id: txGasFees.id }));
+    return txGasFees;
   };
 }
 
@@ -710,17 +706,13 @@ export function updateTransactionUserSettings(txId, txUserSettings) {
       throw error;
     }
 
-    try {
-      dispatch(
-        updateTransactionParams(txUserSettings.id, txUserSettings.txParams),
-      );
-      const newState = await updateMetamaskStateFromBackground();
-      dispatch(updateMetamaskState(newState));
-      dispatch(showConfTxPage({ id: txUserSettings.id }));
-      return txUserSettings;
-    } finally {
-      dispatch(hideLoadingIndication());
-    }
+    dispatch(
+      updateTransactionParams(txUserSettings.id, txUserSettings.txParams),
+    );
+    const newState = await updateMetamaskStateFromBackground();
+    dispatch(updateMetamaskState(newState));
+    dispatch(showConfTxPage({ id: txUserSettings.id }));
+    return txUserSettings;
   };
 }
 
