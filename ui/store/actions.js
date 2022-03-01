@@ -687,17 +687,13 @@ export function updateSwapApprovalTransaction(txId, txSwapApproval) {
       throw error;
     }
 
-    try {
-      dispatch(
-        updateTransactionParams(txSwapApproval.id, txSwapApproval.txParams),
-      );
-      const newState = await updateMetamaskStateFromBackground();
-      dispatch(updateMetamaskState(newState));
-      dispatch(showConfTxPage({ id: txSwapApproval.id }));
-      return txSwapApproval;
-    } finally {
-      dispatch(hideLoadingIndication());
-    }
+    dispatch(
+      updateTransactionParams(txSwapApproval.id, txSwapApproval.txParams),
+    );
+    const newState = await updateMetamaskStateFromBackground();
+    dispatch(updateMetamaskState(newState));
+    dispatch(showConfTxPage({ id: txSwapApproval.id }));
+    return txSwapApproval;
   };
 }
 
@@ -712,15 +708,11 @@ export function updateSwapTransaction(txId, txSwap) {
       throw error;
     }
 
-    try {
-      dispatch(updateTransactionParams(txSwap.id, txSwap.txParams));
-      const newState = await updateMetamaskStateFromBackground();
-      dispatch(updateMetamaskState(newState));
-      dispatch(showConfTxPage({ id: txSwap.id }));
-      return txSwap;
-    } finally {
-      dispatch(hideLoadingIndication());
-    }
+    dispatch(updateTransactionParams(txSwap.id, txSwap.txParams));
+    const newState = await updateMetamaskStateFromBackground();
+    dispatch(updateMetamaskState(newState));
+    dispatch(showConfTxPage({ id: txSwap.id }));
+    return txSwap;
   };
 }
 
