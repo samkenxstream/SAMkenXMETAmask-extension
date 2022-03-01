@@ -17,15 +17,10 @@
     "**/*.test.ts",
     "**/*.test.tsx",
     ".storybook/**/*",
-    "dist/**/*",
+    "builds/**",
+    "dist/**",
     "node_modules/**"
   ],
   "extends": "@tsconfig/node14/tsconfig.json",
-  "include": [
-    "app/**/*",
-    "development/**/*",
-    "test/**/*",
-    "ui/**/*",
-    "dependencies.d.ts"
-  ]
+  "typeRoots": ["typings", "node_modules/@types"]
 }
