@@ -97,15 +97,15 @@ DefaultStory.args = {
 export const WithLeftIcon = () => (
   <Chip
     label="Done!"
-    borderColor={COLORS.SUCCESS3}
-    leftIcon={<ApproveIcon size={24} color="#4cd964" />}
+    borderColor={COLORS.SUCCESS_DEFAULT}
+    leftIcon={<ApproveIcon size={24} color="var(--color-success-default)" />}
   />
 );
 
 export const WithRightIcon = () => (
   <Chip
     label="0x5CfE73b6021E818B776b421B1c4Db2474086a7e1"
-    borderColor={COLORS.UI4}
+    borderColor={COLORS.BORDER_DEFAULT}
     rightIcon={
       <Identicon
         address="0x5CfE73b6021E818B776b421B1c4Db2474086a7e1"
@@ -118,7 +118,7 @@ export const WithRightIcon = () => (
 export const WithBothIcons = () => (
   <Chip
     label="Account 1"
-    borderColor={COLORS.UI4}
+    borderColor={COLORS.BORDER_DEFAULT}
     rightIcon={
       <svg
         width="10"
