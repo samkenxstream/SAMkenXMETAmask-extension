@@ -3,7 +3,9 @@
 .textarea {
   display: block;
   box-shadow: none;
-  color: var(--black);
+  background-color: var(--color-background-default);
+  color: var(--color-text-default);
+  border-color: var(--color-border-default);
 
   @include design-system.H6;
 
