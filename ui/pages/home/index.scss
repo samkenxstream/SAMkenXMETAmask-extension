@@ -136,24 +136,35 @@
 
   &__new-network-notification {
     margin-bottom: 50px;
-  }
-
-  &__new-network-notification-message {
-    display: flex;
-    flex-direction: row;
 
     &--image {
       margin-right: 10px;
     }
-  }
 
-  &__close {
-    color: var(--ui-black);
-    background: none;
-    margin-left: 20px;
+    &--close {
+      color: var(--ui-black);
+      background: none;
+      margin-left: 20px;
+    }
   }
 
   &__error-message {
     left: 8px;
+  }
+
+  &__new-nft-notification {
+    margin-bottom: 24px;
+    margin-right: 8px;
+    left: 16px;
+
+    &--image {
+      margin-right: 10px;
+    }
+
+    &--close {
+      color: var(--ui-black);
+      background: none;
+      margin-left: 44px;
+    }
   }
 }
