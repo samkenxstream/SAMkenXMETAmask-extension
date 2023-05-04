@@ -35,7 +35,7 @@ describe('Import Token', () => {
     const baseStore = {
       metamask: {
         tokens: [],
-        provider: { chainId: '0x1' },
+        providerConfig: { chainId: '0x1' },
         networkConfigurations: {},
         identities: {},
         selectedAddress: '0x1231231',
@@ -152,7 +152,6 @@ describe('Import Token', () => {
     });
 
     it('sets and error when a token is an NFT', async () => {
-      process.env.NFTS_V1 = true;
       getTokenStandardAndDetails.mockImplementation(() =>
         Promise.resolve({ standard: 'ERC721' }),
       );

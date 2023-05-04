@@ -9,8 +9,6 @@ describe('ENS', function () {
     'https://mainnet.infura.io/v3/00000000000000000000000000000000';
 
   async function mockInfura(mockServer) {
-    await mockServer.reset();
-    await mockServer.forAnyRequest().thenPassThrough();
     await mockServer
       .forPost(infuraUrl)
       .withJsonBodyIncluding({ method: 'eth_blockNumber' })
@@ -21,6 +19,34 @@ describe('ENS', function () {
             jsonrpc: '2.0',
             id: '1111111111111111',
             result: '0x1',
+          },
+        };
+      });
+
+    await mockServer
+      .forPost(infuraUrl)
+      .withJsonBodyIncluding({ method: 'eth_getBalance' })
+      .thenCallback(() => {
+        return {
+          statusCode: 200,
+          json: {
+            jsonrpc: '2.0',
+            id: '1111111111111111',
+            result: '0x1',
+          },
+        };
+      });
+
+    await mockServer
+      .forPost(infuraUrl)
+      .withJsonBodyIncluding({ method: 'eth_getBlockByNumber' })
+      .thenCallback(() => {
+        return {
+          statusCode: 200,
+          json: {
+            jsonrpc: '2.0',
+            id: '1111111111111111',
+            result: {},
           },
         };
       });
@@ -52,7 +78,16 @@ describe('ENS', function () {
   it('domain resolves to a correct address', async function () {
     await withFixtures(
       {
-        fixtures: new FixtureBuilder().build(),
+        fixtures: new FixtureBuilder()
+          .withNetworkController({
+            providerConfig: {
+              chainId: '0x1',
+              nickname: '',
+              rpcUrl: '',
+              type: 'mainnet',
+            },
+          })
+          .build(),
         ganacheOptions,
         title: this.test.title,
         testSpecificMock: mockInfura,
@@ -63,12 +98,10 @@ describe('ENS', function () {
         await driver.press('#password', driver.Key.ENTER);
 
         await driver.waitForElementNotPresent('.loading-overlay');
-        await driver.clickElement('.network-display');
-        await driver.clickElement({ text: 'Ethereum Mainnet', tag: 'span' });
 
         await driver.clickElement('[data-testid="eth-overview-send"]');
 
-        await driver.fill(
+        await driver.pasteIntoField(
           'input[placeholder="Search, public address (0x), or ENS"]',
           sampleEnsDomain,
         );
