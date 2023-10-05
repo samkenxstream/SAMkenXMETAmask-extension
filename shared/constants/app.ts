@@ -63,11 +63,24 @@ export const MESSAGE_TYPE = {
   ///: END:ONLY_INCLUDE_IN
 } as const;
 
+///: BEGIN:ONLY_INCLUDE_IN(keyring-snaps)
+// eslint-disable-next-line prefer-destructuring
+export const KEYRING_SNAPS_REGISTRY_URL =
+  process.env.KEYRING_SNAPS_REGISTRY_URL;
+///: END:ONLY_INCLUDE_IN
+
 ///: BEGIN:ONLY_INCLUDE_IN(snaps)
 export const SNAP_DIALOG_TYPES = {
   [DialogType.Alert]: MESSAGE_TYPE.SNAP_DIALOG_ALERT,
   [DialogType.Confirmation]: MESSAGE_TYPE.SNAP_DIALOG_CONFIRMATION,
   [DialogType.Prompt]: MESSAGE_TYPE.SNAP_DIALOG_PROMPT,
+};
+///: END:ONLY_INCLUDE_IN
+
+///: BEGIN:ONLY_INCLUDE_IN(keyring-snaps)
+export const SNAP_MANAGE_ACCOUNTS_CONFIRMATION_TYPES = {
+  confirmAccountCreation: 'snap_manageAccounts:confirmAccountCreation',
+  confirmAccountRemoval: 'snap_manageAccounts:confirmAccountRemoval',
 };
 ///: END:ONLY_INCLUDE_IN
 

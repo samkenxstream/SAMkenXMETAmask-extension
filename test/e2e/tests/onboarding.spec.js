@@ -9,6 +9,8 @@ const {
   importSRPOnboardingFlow,
   importWrongSRPOnboardingFlow,
   testSRPDropdownIterations,
+  assertAccountBalanceForDOM,
+  defaultGanacheOptions,
 } = require('../helpers');
 const FixtureBuilder = require('../fixture-builder');
 
@@ -18,12 +20,12 @@ describe('MetaMask onboarding', function () {
     'test test test test test test test test test test test test';
   const wrongTestPassword = 'test test test test';
 
-  const ganacheOptions = {
+  const ganacheOptions2 = {
     accounts: [
       {
         secretKey:
           '0x53CB0AB5226EEBF4D872113D98332C1555DC304443BEE1CF759D15798D3C55A9',
-        balance: convertToHexValue(25000000000000000000),
+        balance: convertToHexValue(10000000000000000000),
       },
     ],
   };
@@ -32,7 +34,7 @@ describe('MetaMask onboarding', function () {
     await withFixtures(
       {
         fixtures: new FixtureBuilder({ onboarding: true }).build(),
-        ganacheOptions,
+        ganacheOptions: defaultGanacheOptions,
         title: this.test.title,
         failOnConsoleError: false,
       },
@@ -53,7 +55,7 @@ describe('MetaMask onboarding', function () {
     await withFixtures(
       {
         fixtures: new FixtureBuilder({ onboarding: true }).build(),
-        ganacheOptions,
+        ganacheOptions: defaultGanacheOptions,
         title: this.test.title,
         failOnConsoleError: false,
       },
@@ -78,7 +80,7 @@ describe('MetaMask onboarding', function () {
     await withFixtures(
       {
         fixtures: new FixtureBuilder({ onboarding: true }).build(),
-        ganacheOptions,
+        ganacheOptions: defaultGanacheOptions,
         title: this.test.title,
         failOnConsoleError: false,
       },
@@ -100,7 +102,7 @@ describe('MetaMask onboarding', function () {
     await withFixtures(
       {
         fixtures: new FixtureBuilder({ onboarding: true }).build(),
-        ganacheOptions,
+        ganacheOptions: defaultGanacheOptions,
         title: this.test.title,
         failOnConsoleError: false,
       },
@@ -140,7 +142,7 @@ describe('MetaMask onboarding', function () {
     await withFixtures(
       {
         fixtures: new FixtureBuilder({ onboarding: true }).build(),
-        ganacheOptions,
+        ganacheOptions: defaultGanacheOptions,
         title: this.test.title,
         failOnConsoleError: false,
       },
@@ -162,7 +164,6 @@ describe('MetaMask onboarding', function () {
 
         // Check that the error message is displayed for the password fields
         await driver.isElementPresent(
-          // eslint-disable-next-line prettier/prettier
           { text: "Passwords don't match", tag: 'h6' },
           true,
         );
@@ -180,7 +181,7 @@ describe('MetaMask onboarding', function () {
     await withFixtures(
       {
         fixtures: new FixtureBuilder({ onboarding: true }).build(),
-        ganacheOptions,
+        ganacheOptions: defaultGanacheOptions,
         title: this.test.title,
         failOnConsoleError: false,
       },
@@ -204,7 +205,7 @@ describe('MetaMask onboarding', function () {
     await withFixtures(
       {
         fixtures: new FixtureBuilder({ onboarding: true }).build(),
-        ganacheOptions,
+        ganacheOptions: defaultGanacheOptions,
         title: this.test.title,
         failOnConsoleError: false,
       },
@@ -238,16 +239,6 @@ describe('MetaMask onboarding', function () {
     );
   });
 
-  const ganacheOptions2 = {
-    accounts: [
-      {
-        secretKey:
-          '0x53CB0AB5226EEBF4D872113D98332C1555DC304443BEE1CF759D15798D3C55A9',
-        balance: convertToHexValue(10000000000000000000),
-      },
-    ],
-  };
-
   it(`User can add custom network during onboarding`, async function () {
     const networkName = 'Localhost 8546';
     const networkUrl = 'http://127.0.0.1:8546';
@@ -258,7 +249,7 @@ describe('MetaMask onboarding', function () {
       {
         fixtures: new FixtureBuilder({ onboarding: true }).build(),
         ganacheOptions: {
-          ...ganacheOptions,
+          ...defaultGanacheOptions,
           concurrent: { port, chainId, ganacheOptions2 },
         },
         title: this.test.title,
@@ -270,8 +261,9 @@ describe('MetaMask onboarding', function () {
 
         // Add custome network localhost 8546 during onboarding
         await driver.clickElement({ text: 'Advanced configuration', tag: 'a' });
+        await driver.clickElement('.mm-picker-network');
         await driver.clickElement({
-          text: 'Add custom network',
+          text: 'Add network',
           tag: 'button',
         });
 
@@ -299,16 +291,12 @@ describe('MetaMask onboarding', function () {
         assert.equal(networkNotification, true);
 
         // Check localhost 8546 is selected and its balance value is correct
-        const networkDisplay = await driver.findElement(
-          '[data-testid="network-display"]',
-        );
-        assert.equal(await networkDisplay.getText(), networkName);
+        await driver.findElement({
+          css: '[data-testid="network-display"]',
+          text: networkName,
+        });
 
-        const balance = await secondaryGanacheServer.getBalance();
-        const balanceElement = await driver.findElement(
-          '[data-testid="eth-overview__primary-currency"]',
-        );
-        assert.equal(`${balance}\nETH`, await balanceElement.getText());
+        await assertAccountBalanceForDOM(driver, secondaryGanacheServer);
       },
     );
   });

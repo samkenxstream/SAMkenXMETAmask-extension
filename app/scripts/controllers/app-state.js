@@ -13,6 +13,7 @@ import {
   POLLING_TOKEN_ENVIRONMENT_TYPES,
   ORIGIN_METAMASK,
 } from '../../../shared/constants/app';
+import { DEFAULT_AUTO_LOCK_TIME_LIMIT } from '../../../shared/constants/preferences';
 
 export default class AppStateController extends EventEmitter {
   /**
@@ -25,14 +26,15 @@ export default class AppStateController extends EventEmitter {
       initState,
       onInactiveTimeout,
       preferencesStore,
-      qrHardwareStore,
       messenger,
+      extension,
     } = opts;
     super();
 
+    this.extension = extension;
     this.onInactiveTimeout = onInactiveTimeout || (() => undefined);
     this.store = new ObservableStore({
-      timeoutMinutes: 0,
+      timeoutMinutes: DEFAULT_AUTO_LOCK_TIME_LIMIT,
       connectedStatusPopoverHasBeenShown: true,
       defaultHomeActiveTabName: null,
       browserEnvironment: {},
@@ -48,6 +50,10 @@ export default class AppStateController extends EventEmitter {
       showProductTour: true,
       trezorModel: null,
       currentPopupId: undefined,
+      // This key is only used for checking if the user had set advancedGasFee
+      // prior to Migration 92.3 where we split out the setting to support
+      // multiple networks.
+      hadAdvancedGasFeesSetPriorToMigration92_3: false,
       ...initState,
       qrHardware: {},
       nftsDropdownState: {},
@@ -71,9 +77,13 @@ export default class AppStateController extends EventEmitter {
       }
     });
 
-    qrHardwareStore.subscribe((state) => {
-      this.store.updateState({ qrHardware: state });
-    });
+    messenger.subscribe(
+      'KeyringController:qrKeyringStateChange',
+      (qrHardware) =>
+        this.store.updateState({
+          qrHardware,
+        }),
+    );
 
     const { preferences } = preferencesStore.getState();
     this._setInactiveTimeout(preferences.autoLockTimeLimit);
@@ -183,6 +193,20 @@ export default class AppStateController extends EventEmitter {
     });
   }
 
+  ///: BEGIN:ONLY_INCLUDE_IN(snaps)
+  /**
+   * Record if popover for snaps privacy warning has been shown
+   * on the first install of a snap.
+   *
+   * @param {boolean} shown - shown status
+   */
+  setSnapsInstallPrivacyWarningShownStatus(shown) {
+    this.store.updateState({
+      snapsInstallPrivacyWarningShown: shown,
+    });
+  }
+  ///: END:ONLY_INCLUDE_IN
+
   /**
    * Record the timestamp of the last time the user has seen the outdated browser warning
    *
@@ -230,7 +254,7 @@ export default class AppStateController extends EventEmitter {
     if (this.timer) {
       clearTimeout(this.timer);
     } else if (isManifestV3) {
-      chrome.alarms.clear(AUTO_LOCK_TIMEOUT_ALARM);
+      this.extension.alarms.clear(AUTO_LOCK_TIMEOUT_ALARM);
     }
 
     if (!timeoutMinutes) {
@@ -238,14 +262,14 @@ export default class AppStateController extends EventEmitter {
     }
 
     if (isManifestV3) {
-      chrome.alarms.create(AUTO_LOCK_TIMEOUT_ALARM, {
+      this.extension.alarms.create(AUTO_LOCK_TIMEOUT_ALARM, {
         delayInMinutes: timeoutMinutes,
         periodInMinutes: timeoutMinutes,
       });
-      chrome.alarms.onAlarm.addListener((alarmInfo) => {
+      this.extension.alarms.onAlarm.addListener((alarmInfo) => {
         if (alarmInfo.name === AUTO_LOCK_TIMEOUT_ALARM) {
           this.onInactiveTimeout();
-          chrome.alarms.clear(AUTO_LOCK_TIMEOUT_ALARM);
+          this.extension.alarms.clear(AUTO_LOCK_TIMEOUT_ALARM);
         }
       });
     } else {
@@ -437,7 +461,6 @@ export default class AppStateController extends EventEmitter {
 
   _acceptApproval() {
     if (!this._approvalRequestId) {
-      log.error('Attempted to accept missing unlock approval request');
       return;
     }
     try {
@@ -446,7 +469,7 @@ export default class AppStateController extends EventEmitter {
         this._approvalRequestId,
       );
     } catch (error) {
-      log.error('Failed to accept transaction approval request', error);
+      log.error('Failed to unlock approval request', error);
     }
 
     this._approvalRequestId = null;

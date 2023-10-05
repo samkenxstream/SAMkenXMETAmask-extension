@@ -1,6 +1,7 @@
 import * as React from 'react';
 import configureMockStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
+import { waitFor, screen } from '@testing-library/react';
 import { renderWithProvider } from '../../../../../test/lib/render-helpers';
 import mockState from '../../../../../test/data/mock-state.json';
 import ViewSnap from './view-snap';
@@ -12,6 +13,11 @@ jest.mock('../../../../store/actions.ts', () => {
     removeSnap: jest.fn(),
     removePermissionsFor: jest.fn(),
     updateCaveat: jest.fn(),
+    getPhishingResult: jest.fn().mockImplementation(() => {
+      return {
+        result: false,
+      };
+    }),
   };
 });
 
@@ -38,17 +44,23 @@ describe('ViewSnap', () => {
 
     // Snap name & Snap authorship component
     expect(getByText('BIP-44 Test Snap')).toBeDefined();
-    expect(container.getElementsByClassName('snaps-authorship')?.length).toBe(
-      1,
-    );
+    expect(
+      container.getElementsByClassName('snaps-authorship-expanded')?.length,
+    ).toBe(1);
     // Snap description
     expect(
       getByText('An example Snap that signs messages using BLS.'),
     ).toBeDefined();
+    // Snap website
+    await waitFor(() => {
+      const websiteElement = screen.queryByText('https://snaps.consensys.io/');
+      expect(websiteElement).toBeDefined();
+      expect(getByText('https://snaps.consensys.io/')).toBeDefined();
+    });
     // Snap version info
-    expect(getByText('v5.1.2')).toBeDefined();
+    expect(getByText('5.1.2')).toBeDefined();
     // Enable Snap
-    expect(getByText('Enable')).toBeDefined();
+    expect(getByText('Enabled')).toBeDefined();
     expect(container.getElementsByClassName('toggle-button')?.length).toBe(1);
     // Permissions
     expect(getByText('Permissions')).toBeDefined();
@@ -62,7 +74,7 @@ describe('ViewSnap', () => {
         ?.length,
     ).toBe(1);
     // Remove snap
-    expect(getByText('Remove snap')).toBeDefined();
+    expect(getByText('Remove Snap')).toBeDefined();
     expect(
       getByText(
         'This action will delete the snap, its data and revoke your given permissions.',

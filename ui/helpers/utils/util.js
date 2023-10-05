@@ -9,7 +9,12 @@ import * as lodash from 'lodash';
 import bowser from 'bowser';
 ///: BEGIN:ONLY_INCLUDE_IN(snaps)
 import { getSnapPrefix } from '@metamask/snaps-utils';
+import { WALLET_SNAP_PERMISSION_KEY } from '@metamask/rpc-methods';
+// eslint-disable-next-line import/no-duplicates
+import { isObject } from '@metamask/utils';
 ///: END:ONLY_INCLUDE_IN
+// eslint-disable-next-line import/no-duplicates
+import { isStrictHexString } from '@metamask/utils';
 import { CHAIN_IDS, NETWORK_TYPES } from '../../../shared/constants/network';
 import {
   toChecksumHexAddress,
@@ -28,8 +33,10 @@ import {
   SNAPS_METADATA,
 } from '../../../shared/constants/snaps';
 ///: END:ONLY_INCLUDE_IN
-
 // formatData :: ( date: <Unix Timestamp> ) -> String
+import { isEqualCaseInsensitive } from '../../../shared/modules/string-utils';
+import { hexToDecimal } from '../../../shared/modules/conversion.utils';
+
 export function formatDate(date, format = "M/d/y 'at' T") {
   if (!date) {
     return '';
@@ -60,9 +67,10 @@ export function isDefaultMetaMaskChain(chainId) {
   if (
     !chainId ||
     chainId === CHAIN_IDS.MAINNET ||
+    chainId === CHAIN_IDS.LINEA_MAINNET ||
     chainId === CHAIN_IDS.GOERLI ||
     chainId === CHAIN_IDS.SEPOLIA ||
-    chainId === CHAIN_IDS.LINEA_TESTNET ||
+    chainId === CHAIN_IDS.LINEA_GOERLI ||
     chainId === CHAIN_IDS.LOCALHOST
   ) {
     return true;
@@ -204,7 +212,7 @@ export function getRandomFileName() {
  * Returns the given address if it is no longer than 10 characters.
  * Shortened addresses are 13 characters long.
  *
- * Example output: 0xabcd...1234
+ * Example output: 0xabcde...12345
  *
  * @param {string} address - The address to shorten.
  * @returns {string} The shortened address, or the original if it was no longer
@@ -490,11 +498,11 @@ export const sanitizeMessage = (msg, primaryType, types) => {
 };
 
 export function getAssetImageURL(image, ipfsGateway) {
-  if (!image || !ipfsGateway || typeof image !== 'string') {
+  if (!image || typeof image !== 'string') {
     return '';
   }
 
-  if (image.startsWith('ipfs://')) {
+  if (ipfsGateway && image.startsWith('ipfs://')) {
     return getFormattedIpfsUrl(ipfsGateway, image, true);
   }
   return image;
@@ -566,6 +574,25 @@ export const getSnapName = (snapId, subjectMetadata) => {
   return subjectMetadata?.name ?? removeSnapIdPrefix(snapId);
 };
 
+export const getDedupedSnaps = (request, permissions) => {
+  const permission = request?.permissions?.[WALLET_SNAP_PERMISSION_KEY];
+  const requestedSnaps = permission?.caveats[0].value;
+  const currentSnaps =
+    permissions?.[WALLET_SNAP_PERMISSION_KEY]?.caveats[0].value;
+
+  if (!isObject(currentSnaps) && requestedSnaps) {
+    return Object.keys(requestedSnaps);
+  }
+
+  const requestedSnapKeys = requestedSnaps ? Object.keys(requestedSnaps) : [];
+  const currentSnapKeys = currentSnaps ? Object.keys(currentSnaps) : [];
+  const dedupedSnaps = requestedSnapKeys.filter(
+    (snapId) => !currentSnapKeys.includes(snapId),
+  );
+
+  return dedupedSnaps.length > 0 ? dedupedSnaps : requestedSnapKeys;
+};
+
 ///: END:ONLY_INCLUDE_IN
 
 /**
@@ -598,4 +625,45 @@ export const getNetworkNameFromProviderType = (providerName) => {
     return '';
   }
   return providerName;
+};
+
+/**
+ * Checks if the given keyring type is able to export an account.
+ *
+ * @param keyringType - The type of the keyring.
+ * @returns {boolean} `false` if the keyring type includes 'Hardware' or 'Snap', `true` otherwise.
+ */
+export const isAbleToExportAccount = (keyringType = '') => {
+  return !keyringType.includes('Hardware') && !keyringType.includes('Snap');
+};
+
+/**
+ * Checks if a tokenId in Hex or decimal format already exists in an object.
+ *
+ * @param {string} address - collection address.
+ * @param {string} tokenId - tokenId to search for
+ * @param {*} obj - object to look into
+ * @returns {boolean} `false` if tokenId does not already exist.
+ */
+export const checkTokenIdExists = (address, tokenId, obj) => {
+  // check if input tokenId is hexadecimal
+  // If it is convert to decimal and compare with existing tokens
+  const isHex = isStrictHexString(tokenId);
+  let convertedTokenId = tokenId;
+  if (isHex) {
+    // Convert to decimal
+    convertedTokenId = hexToDecimal(tokenId);
+  }
+
+  if (obj[address]) {
+    const value = obj[address];
+    return lodash.some(value.nfts, (nft) => {
+      return (
+        nft.address === address &&
+        (isEqualCaseInsensitive(nft.tokenId, tokenId) ||
+          isEqualCaseInsensitive(nft.tokenId, convertedTokenId.toString()))
+      );
+    });
+  }
+  return false;
 };
